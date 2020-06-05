@@ -2,9 +2,12 @@ const express = require('express');
 const routes = express.Router();
 const UserController = require('./controllers/userController');
 
-routes.post('/users', UserController.persistUser);
-routes.get('/users', UserController.listUSers);
-routes.get('/usergit', UserController.getUserGit);
-routes.get('/usersgit2020', UserController.getUserGit2020);
+routes.get('/user/:id',UserController.listByID);
+routes.post('/users',UserController.persistUser);
+routes.get('/users',UserController.listUsers);
+routes.get('/userGit',UserController.getUserGit);
+
+//Login
+routes.post('/login/:username',UserController.login)
 
 module.exports = routes;

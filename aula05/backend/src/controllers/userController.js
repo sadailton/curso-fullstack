@@ -1,44 +1,70 @@
 const mongoose = require('mongoose');
-const User = mongoose.model('User');
 const axios = require('axios');
+const User = mongoose.model('User');
 
 module.exports = {
-    // async persistUser(req,res){
-    //     const payload = await req.body;
-    //     User.create(payload);
-    //     res.json(payload)
-    // },
 
-    async persistUser(req,res){
-        const {userGit} = req.body;
-        //const response = await axios.get(`https://api.github.com/users/${userGit}`)
-        res.json(userGit.login);
-        res.send().status(200);
+    //Login
+    async login(req,res){
+        const username = await req.params.username;
+        const validation = await User.find({login: username});
+
+        if(validation.length === 0){
+            res.json({'msg': 0})
+        } else {
+            res.json({'msg': 1})
+        }
     },
 
-    async listUSers(req,res){
+    //Persistir no banco usuários do Git
+    async persistUser(req,res){
+        const {userGit} = req.body;
+        const response = await axios.get(`https://api.github.com/users/${userGit}`);
+        const {login,name,avatar_url,company,public_repos,followers,bio} = response.data;
+        const payload = await User.create({
+            login,
+            name,
+            avatar_url,
+            company,
+            public_repos,
+            followers,
+            bio
+        })
+        res.json(payload);
+    },
+
+    async listUsers(req,res){
         const response = await User.find();
         res.json(response);
     },
 
-    async getUserGit(req,res){
-        const response = await axios.get('https://api.github.com/users')
-        res.json(response.data);
-        
-        //data = new Date(response.data.created_at)
-        //res.send(`Data: ${data.getFullYear()}`)
+    async listByID(req, res){
+        const userID = await req.params.id;
+        const result = await User.findById(userID);
+        res.json(result)        
     },
 
-    async getUserGit2020(req,res){
-        const response = await axios.get('https://api.github.com/users')
-        const usuariosGit = response.data;
-        usuariosGit.map((item, key) => {
-            console.log(item)
-        })
-        
+    async getUserGit(req,res){
+        const response = await axios.get('https://api.github.com/users');
+        res.json(response.data);
+    }, 
+    //Persistir no banco usuário do Git se criado antes de 2020
+    async gitUser2020(req,res){
+        const response = await axios.get('https://api.github.com/users');
+        const {login,created_at} = response.data;
+        const created_at_date = new Date(Date.parse(created_at));
+
+        if(created_at_date.getFullYear() < 2020){
+            res.json({
+                "msg" : "usuário antigo"
+            })
+        }else{
+            res.json({
+                "msg" : "usuário muito novo"
+            })
+        }
+
     }
 
-    //1 - Persistir no banco usuários do Git
-    //2 - Persistir no banco usuários criados antes de 2020.
-    //3 - Calcular a distância entre duas coordenadas (latitude, longitude).
+    //Novo backend origen:[lat,lon] destino:[lat,lon] => distancia
 }
